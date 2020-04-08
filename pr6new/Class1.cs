@@ -13,6 +13,9 @@ using Autodesk.AutoCAD.Windows;
 using System.Windows.Forms;
 using System.ComponentModel;
 using System.Threading;
+using System.Windows.Media;
+using System.Drawing;
+using System.Windows;
 
 [assembly: CommandClass(typeof(pr6new.Class1))]
 namespace pr6new
@@ -121,7 +124,7 @@ namespace pr6new
 
                                     Circle circle1 = new Circle(new Point3d(0, 0, 0), Vector3d.ZAxis, 10);
                                     newBlockDef.AppendEntity(circle1);
-                                    
+
                                     Circle circle2 = new Circle(new Point3d(20, 10, 0), Vector3d.ZAxis, 10); //зміщення на x=20 y=10
                                     newBlockDef.AppendEntity(circle2);
 
@@ -183,7 +186,7 @@ namespace pr6new
         [CommandMethod("AddDbEvents")]
         public void addDbEvents()
         {
-            if(myPalette == null)
+            if (myPalette == null)
             {
                 Editor ed = Autodesk.AutoCAD.ApplicationServices.Core.Application.DocumentManager.MdiActiveDocument.Editor;
 
@@ -211,7 +214,7 @@ namespace pr6new
         //видаляє запис
         private void callback_objectErased(object sender, ObjectErasedEventArgs e)
         {
-            
+
             if (e.Erased)
             {
                 foreach (TreeNode node in myPalette.treeView1.Nodes)
@@ -247,7 +250,7 @@ namespace pr6new
                 }
             }
         }
-        
+
         //pr7
         [CommandMethod("addData")]
         public void addData()
@@ -261,7 +264,7 @@ namespace pr6new
                 try
                 {
                     Entity ent = trans.GetObject(getEntityResult.ObjectId, OpenMode.ForRead) as Entity;
-                    if(ent.ExtensionDictionary.IsNull)
+                    if (ent.ExtensionDictionary.IsNull)
                     {
                         ent.UpgradeOpen();
                         ent.CreateExtensionDictionary();// створення словника
@@ -298,11 +301,11 @@ namespace pr6new
 
                         trans.AddNewlyCreatedDBObject(myXrecord, true);
 
-                        if(myPalette != null)
+                        if (myPalette != null)
                         {
                             foreach (TreeNode node in myPalette.treeView1.Nodes)
                             {
-                                if(node.Tag.ToString() == ent.ObjectId.ToString())
+                                if (node.Tag.ToString() == ent.ObjectId.ToString())
                                 {
                                     TreeNode childnode = node.Nodes.Add("Extension dictionary");
 
@@ -317,7 +320,7 @@ namespace pr6new
                     }
                     trans.Commit();
                 }
-                catch(System.Exception ex)
+                catch (System.Exception ex)
                 {
                     ed.WriteMessage("a problem occured because " + ex.Message);
                 }
@@ -374,7 +377,7 @@ namespace pr6new
             catch (System.Exception ex)
             {
                 ed.WriteMessage("a problem occured because " + ex.Message);
-                 
+
             }
             finally
             {
@@ -382,6 +385,147 @@ namespace pr6new
             }
         }
 
+        //Lab 8 – PointMonitor
+        [CommandMethod("addPointMonitor")]
+        public void startMonitor()
+        {
+            Editor ed = Autodesk.AutoCAD.ApplicationServices.Core.Application.DocumentManager.MdiActiveDocument.Editor;
+            ed.PointMonitor += new PointMonitorEventHandler(MyPointMonitor);
+        }
 
+        public void MyPointMonitor(object sender, PointMonitorEventArgs e)
+        {
+            FullSubentityPath[] fullEntPath = e.Context.GetPickedEntities();
+
+            if (fullEntPath.Length != 0)
+            {
+                Transaction trans = Autodesk.AutoCAD.ApplicationServices.Core.Application.DocumentManager.MdiActiveDocument.Database.TransactionManager.StartTransaction();
+
+                try
+                {
+                    Entity ent = trans.GetObject(fullEntPath[0].GetObjectIds()[0], OpenMode.ForRead) as Entity;
+
+                    e.AppendToolTipText("the Entity is a " + ent.GetType().ToString());
+
+                    if (myPalette == null)
+                    {
+                        return;
+                    }
+
+                    System.Drawing.Font fontRegular = new System.Drawing.Font("Microsoft Sans Serif", 8, System.Drawing.FontStyle.Regular);
+                    System.Drawing.Font fontBold = new System.Drawing.Font("Microsoft Sans Serif", 8, System.Drawing.FontStyle.Bold);
+
+                    myPalette.treeView1.SuspendLayout();
+
+                    foreach (TreeNode node in myPalette.treeView1.Nodes)
+                    {
+                        if (node.Tag.ToString() == ent.ObjectId.ToString())
+                        {
+                            if (!fontBold.Equals(node.NodeFont))
+                            {
+                                node.NodeFont = fontBold;
+                                node.Text = node.Text;
+                            }
+                        }
+                        else
+                        {
+                            if (!fontRegular.Equals(node.NodeFont))
+                            {
+                                node.NodeFont = fontRegular;
+                            }
+                        }
+
+                    }
+                    myPalette.treeView1.ResumeLayout();
+                    myPalette.treeView1.Refresh();
+                    myPalette.treeView1.Update();
+
+                    trans.Commit();
+                }
+                catch (System.Exception ex)
+                {
+                    Autodesk.AutoCAD.ApplicationServices.Core.Application.DocumentManager.MdiActiveDocument.Editor.WriteMessage(ex.ToString());
+                }
+                finally
+                {
+                    trans.Dispose();
+                }
+            }
+        }
+        [CommandMethod("newInput")]
+        public void NewInput()
+        {
+            UIElement element = new UIElement();
+            Editor ed = Autodesk.AutoCAD.ApplicationServices.Core.Application.DocumentManager.MdiActiveDocument.Editor;
+            ed.PointMonitor += new PointMonitorEventHandler(MyInputMonitor);
+
+            ed.TurnForcedPickOn();
+
+            PromptPointOptions getPointOptions = new PromptPointOptions("Pick a Point: ");
+            PromptPointResult getPointResult = ed.GetPoint(getPointOptions);
+
+            ed.GetPoint(getPointOptions);
+
+            ed.PointMonitor -= new PointMonitorEventHandler(MyInputMonitor);
+
+        }
+
+        public void MyInputMonitor(Object sender, PointMonitorEventArgs e)
+        {
+            FullSubentityPath[] fullEntPath = e.Context.GetPickedEntities();
+
+            if (fullEntPath.Length != 0)
+            {
+                Transaction trans = Autodesk.AutoCAD.ApplicationServices.Core.Application.DocumentManager.MdiActiveDocument.Database.TransactionManager.StartTransaction();
+
+                try
+                {
+                    Curve ent = trans.GetObject(fullEntPath[0].GetObjectIds()[0], OpenMode.ForRead) as Curve;
+
+                    if (ent.ExtensionDictionary.IsValid)
+                    {
+                        DBDictionary extensionDict = trans.GetObject(ent.ExtensionDictionary, OpenMode.ForRead) as DBDictionary;
+                        ObjectId entryId = extensionDict.GetAt("MyData");
+
+                        Xrecord myXrecord = trans.GetObject(entryId, OpenMode.ForRead) as Xrecord;
+
+                        foreach (TypedValue myTypedVal in myXrecord.Data)
+                        {
+                            if (myTypedVal.TypeCode == (int)DxfCode.Real)
+                            {
+                                Point3d pnt = ent.GetPointAtDist((double)myTypedVal.Value);
+
+                                Point2d pixels = e.Context.DrawContext.Viewport.GetNumPixelsInUnitSquare(pnt);
+
+                                double xDist = 10 / pixels.X;
+                                double yDist = 10 / pixels.Y;
+
+                                Circle circle = new Circle(pnt, Vector3d.ZAxis, xDist);
+
+                                e.Context.DrawContext.Geometry.Draw(circle);
+
+                                DBText text = new DBText();
+                                text.SetDatabaseDefaults();
+
+                                text.Position = pnt + new Vector3d(xDist, yDist, 0);
+                                text.TextString = myTypedVal.Value.ToString();
+
+                                text.Height = yDist;
+
+                                e.Context.DrawContext.Geometry.Draw(text);
+                            }
+                        }
+                    }
+                }
+                catch (System.Exception ex)
+                {
+                    Autodesk.AutoCAD.ApplicationServices.Core.Application.DocumentManager.MdiActiveDocument.Editor.WriteMessage(ex.ToString());
+                }
+                finally
+                {
+                    trans.Dispose();
+                }
+            }
+        }
     }
 }
