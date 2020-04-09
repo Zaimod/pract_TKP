@@ -527,5 +527,122 @@ namespace pr6new
                 }
             }
         }
+        //Lab 9 – EntityJig  
+        public class MyCircleJig : EntityJig
+        {
+            Point3d centerPoint = new Point3d();
+            double radius = 0.0;
+
+            public int CurrentInputValue;
+
+            public MyCircleJig(Entity ent) : base(ent) { CurrentInputValue = 0; }
+
+            protected override SamplerStatus Sampler(JigPrompts prompts)
+            {
+                switch (CurrentInputValue)
+                {
+                    case 0:
+                        Point3d oldPnt = centerPoint;
+                        PromptPointResult jigPromptResult = prompts.AcquirePoint("Pick center point: ");
+
+                        if (jigPromptResult.Status == PromptStatus.OK)
+                        {
+                            centerPoint = jigPromptResult.Value;
+
+                            if (oldPnt.DistanceTo(centerPoint) < 0.0001)
+                            {
+                                return SamplerStatus.NoChange;
+                            }
+                        }
+                        return SamplerStatus.OK;
+
+                    case 1:
+                        double oldRadius = radius;
+                        JigPromptDistanceOptions jigPromptDistanceOptions = new JigPromptDistanceOptions("Pick radius: ");
+
+                        jigPromptDistanceOptions.UseBasePoint = true;
+                        jigPromptDistanceOptions.BasePoint = centerPoint;
+
+                        PromptDoubleResult jigPromptPointResult = prompts.AcquireDistance(jigPromptDistanceOptions);
+
+                        if (jigPromptPointResult.Status == PromptStatus.OK)
+                        {
+                            radius = jigPromptPointResult.Value;
+
+                            if (Math.Abs(radius) < 0.1)
+                            {
+                                radius = 1;
+                            }
+
+                            if (Math.Abs(oldRadius - radius) < 0.0001)
+                            {
+                                return SamplerStatus.NoChange;
+                            }
+                        }
+                        return SamplerStatus.OK;
+
+                    default:
+                        return 0;
+                }
+            }
+
+            protected override bool Update()
+            {
+                switch (CurrentInputValue)
+                {
+                    case 0:
+                        ((Circle)Entity).Center = centerPoint;
+                        break;
+
+                    case 1:
+                        ((Circle)Entity).Radius = radius;
+                        break;
+                }
+                return true;
+            }
+
+        }
+
+        [CommandMethod("circleJig")]
+        public void CircleJig()
+        {
+            Circle circle = new Circle(Point3d.Origin, Vector3d.ZAxis, 10);
+
+            MyCircleJig jig = new MyCircleJig(circle);
+
+            for (int i = 0; i <= 1; i++)
+            {
+                jig.CurrentInputValue = i;
+
+                Editor ed = Autodesk.AutoCAD.ApplicationServices.Core.Application.DocumentManager.MdiActiveDocument.Editor;
+                PromptResult promptResult = ed.Drag(jig);
+
+                if (promptResult.Status == PromptStatus.Cancel || promptResult.Status == PromptStatus.Error)
+                {
+                    return;
+                }
+            }
+
+            Database dwg = Autodesk.AutoCAD.ApplicationServices.Core.Application.DocumentManager.MdiActiveDocument.Database;
+            Transaction trans = dwg.TransactionManager.StartTransaction();
+
+            try
+            {
+                BlockTableRecord currentSpace = trans.GetObject(dwg.CurrentSpaceId, OpenMode.ForWrite) as BlockTableRecord;
+                currentSpace.AppendEntity(circle);
+
+                trans.AddNewlyCreatedDBObject(circle, true);
+
+                trans.Commit();
+            }
+            catch (System.Exception) { }
+            finally
+            {
+                trans.Dispose();
+            }
+        }
     }
+    
+    
+ 
 }
