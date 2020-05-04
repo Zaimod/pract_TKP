@@ -16,6 +16,7 @@ using System.Threading;
 using System.Windows.Media;
 using System.Drawing;
 using System.Windows;
+using Autodesk.AutoCAD.GraphicsInterface;
 
 [assembly: CommandClass(typeof(pr6new.Class1))]
 namespace pr6new
@@ -83,13 +84,13 @@ namespace pr6new
                                     //Завершення транзакції
                                     trans.Commit();
                                 }
-                                catch (System.Exception ex) ///?
+                                catch (System.Exception ex)
                                 {
                                     ed.WriteMessage("Problem due to " + ex.Message.ToString());
                                 }
                                 finally
                                 {
-                                    trans.Dispose();
+                                    trans.Dispose(); //cборщик мусора
                                 }
                             }
                         }
@@ -256,7 +257,7 @@ namespace pr6new
         public void addData()
         {
             Editor ed = Autodesk.AutoCAD.ApplicationServices.Core.Application.DocumentManager.MdiActiveDocument.Editor; //Редактор
-            PromptEntityResult getEntityResult = ed.GetEntity("Pick an entity to add an Extension Dictionary to : "); //Отримання вводу користувача
+            PromptEntityResult getEntityResult = ed.GetEntity("Pick an entity to add an Extension Dictionary to : ");
 
             if (getEntityResult.Status == PromptStatus.OK)
             {
@@ -271,7 +272,7 @@ namespace pr6new
                     }
 
                     DBDictionary extensionDict = trans.GetObject(ent.ExtensionDictionary, OpenMode.ForRead) as DBDictionary;
-                    if (extensionDict.Contains("MyData"))
+                    if (extensionDict.Contains("MyData"))// перевірка на існуючий
                     {
                         ObjectId entryId = extensionDict.GetAt("MyData");
                         ed.WriteMessage("\n" + "This entity already has data...");
@@ -641,8 +642,95 @@ namespace pr6new
                 trans.Dispose();
             }
         }
+        
+        //Lab 10 User Interface
+
+        //Context Menu
     }
-    
-    
- 
+    public class adskClass : Class1, IExtensionApplication
+    {
+        ContextMenuExtension myContextMenu;
+        private void addContextMenu()
+        {
+            Editor ed = Autodesk.AutoCAD.ApplicationServices.Core.Application.DocumentManager.MdiActiveDocument.Editor;
+
+            try
+            {
+                myContextMenu = new ContextMenuExtension();
+                myContextMenu.Title = "Circle Jig";
+
+                Autodesk.AutoCAD.Windows.MenuItem mi = new Autodesk.AutoCAD.Windows.MenuItem("Run Circle Jig");
+
+                mi.Click += new EventHandler(CallBackOnClick);
+
+                myContextMenu.MenuItems.Add(mi);
+                Autodesk.AutoCAD.ApplicationServices.Application.AddDefaultContextMenuExtension(myContextMenu);
+            }
+            catch (System.Exception ex)
+            {
+                ed.WriteMessage("Error Adding Context Menu: " + ex.Message);
+            }
+        }
+        private void RemoveContextMenu()
+        {
+            Editor ed = Autodesk.AutoCAD.ApplicationServices.Core.Application.DocumentManager.MdiActiveDocument.Editor;
+            try
+            {
+                if (myContextMenu != null)
+                {
+                    Autodesk.AutoCAD.ApplicationServices.Application.RemoveDefaultContextMenuExtension(myContextMenu);
+                    myContextMenu = null;
+                }
+            }
+            catch (System.Exception ex)
+            {
+                ed.WriteMessage("Error Remove Context Menu: " + ex.Message);
+            }
+        }
+        private void CallBackOnClick(object sender, EventArgs e)
+        {
+            using (DocumentLock dockLock = Autodesk.AutoCAD.ApplicationServices.Core.Application.DocumentManager.MdiActiveDocument.LockDocument())
+            {
+                Class1 class1 = new Class1();
+                class1.CircleJig();
+            }
+        }
+
+        public void Initialize()
+        {
+            addContextMenu();
+            AddTabDialog();
+        }
+
+        public void Terminate()
+        {
+            RemoveContextMenu();
+        }
+
+        //Dialog
+        public static string myVariable;
+
+        public static void AddTabDialog()
+        {
+            Autodesk.AutoCAD.ApplicationServices.Application.DisplayingOptionDialog += new TabbedDialogEventHandler(TabHandler);
+        }
+        private static void TabHandler(object sender, TabbedDialogEventArgs e)
+        {
+            myCustomTab myCustomTab = new myCustomTab();
+
+            TabbedDialogAction tabbedDialogAct = new TabbedDialogAction(myCustomTab.OnOk);
+
+            TabbedDialogExtension tabbedDialogExt = new TabbedDialogExtension(myCustomTab, tabbedDialogAct);
+
+            e.AddTab("Value for custom variable", tabbedDialogExt);
+        }
+
+        [CommandMethod("testTab")]
+        public void TestTab()
+        {
+
+            Editor ed = Autodesk.AutoCAD.ApplicationServices.Core.Application.DocumentManager.MdiActiveDocument.Editor;
+            ed.WriteMessage(myVariable.ToString());
+        }
+    }
 }
