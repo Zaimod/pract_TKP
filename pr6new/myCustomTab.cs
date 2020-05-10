@@ -19,8 +19,8 @@ namespace pr6new
         }
         public void OnOk()
         {
-            adskClass adskClass = new adskClass();
-            adskClass.myVariable = textBox1.Text;
+            //adskClass adskClass = new adskClass();
+            //adskClass.myVariable = textBox1.Text;
         }
 
         private void label1_MouseMove(object sender, MouseEventArgs e)

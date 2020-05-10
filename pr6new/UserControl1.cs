@@ -41,13 +41,13 @@ namespace pr6new
         public override void OnDrop(DragEventArgs e)
         {
             Editor ed = Autodesk.AutoCAD.ApplicationServices.Core.Application.DocumentManager.MdiActiveDocument.Editor;
-            adskClass adsk = new adskClass();
+            //adskClass adsk = new adskClass();
             try
             {
                 using (DocumentLock docLock = Autodesk.AutoCAD.ApplicationServices.Core.Application.DocumentManager.MdiActiveDocument.LockDocument()) 
                 {
 
-                    adsk.AddAnEnt();
+                    //adsk.AddAnEnt();
                 }
             }
             catch (Exception ex)
