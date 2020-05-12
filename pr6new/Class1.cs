@@ -865,9 +865,51 @@ namespace pr6new
         [CommandMethod("square")]
         public void square()
         {
+            Document doc = Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager.MdiActiveDocument;
+            Database db = doc.Database;
 
+            Editor ed = doc.Editor;
+
+            using (Transaction Tx = db.TransactionManager.StartTransaction())
+            {
+                ObjectId ModelSpaceId = SymbolUtilityServices.GetBlockModelSpaceId(db);
+
+                BlockTableRecord btr = Tx.GetObject(ModelSpaceId, OpenMode.ForWrite) as BlockTableRecord;
+
+                Point2d pt = new Point2d(0.0, 0.0);
+                ///Квадрат 1
+                Autodesk.AutoCAD.DatabaseServices.Polyline plBox = new Autodesk.AutoCAD.DatabaseServices.Polyline(4);
+                plBox.Normal = Vector3d.ZAxis;
+                plBox.AddVertexAt(0, pt, 0.0, -1.0, -1.0);
+                plBox.AddVertexAt(1, new Point2d(pt.X + 5, pt.Y), 0.0, -1.0, -1.0);
+                plBox.AddVertexAt(2, new Point2d(pt.X + 5, pt.Y + 5), 0.0, -1.0, -1.0);
+                plBox.AddVertexAt(3, new Point2d(pt.X, pt.Y + 5), 0.0, -1.0, -1.0);
+                plBox.Closed = true;
+
+                ObjectId pLineId2;
+                pLineId2 = btr.AppendEntity(plBox);
+                ObjectIdCollection ObjIds1 = new ObjectIdCollection();
+                ObjIds1.Add(pLineId2);
+
+                ///Штриховка 1
+                Hatch oHatch = new Hatch();
+                Vector3d normal = new Vector3d(0.0, 0.0, 1.0);
+                oHatch.Normal = normal;
+                oHatch.Elevation = 0.0;
+                oHatch.PatternScale = 2.0;
+                oHatch.SetHatchPattern(HatchPatternType.PreDefined, "ZIGZAG");
+
+                btr.AppendEntity(oHatch);
+                Tx.AddNewlyCreatedDBObject(oHatch, true);
+                Tx.AddNewlyCreatedDBObject(plBox, true);
+
+                oHatch.Associative = true;
+                oHatch.AppendLoop((int)HatchLoopTypes.Default, ObjIds1);
+                oHatch.EvaluateHatch(true);
+
+                Tx.Commit();
+            }
         }
-        
         public PaletteSet myPaletteSet2;
         UserControl2 usercontrol2;
         //lab12
