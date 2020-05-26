@@ -659,7 +659,7 @@ namespace pr6new
 
             try
             {
-                DBPoint point = new DBPoint(new Point3d(getXResult.Value.X, getXResult.Value.Y, 0));                
+                DBPoint point = new DBPoint(new Point3d(getXResult.Value.X, getXResult.Value.Y, 0));
 
                 BlockTableRecord btr = trans.GetObject(dwg.CurrentSpaceId, OpenMode.ForWrite) as BlockTableRecord;
                 btr.AppendEntity(point);
@@ -680,234 +680,242 @@ namespace pr6new
             }
 
         }
+        public PaletteSet myPaletteSet3;
+        UserControl_Line control_Line;
 
-        [CommandMethod("line")]
-        public void line()
+        [CommandMethod("start_line")]
+        public void start_line()
         {
-            Editor ed = Autodesk.AutoCAD.ApplicationServices.Core.Application.DocumentManager.MdiActiveDocument.Editor;
+            myPaletteSet3 = new PaletteSet("line", new Guid("0BD2504F-9F4E-4E35-8D81-5BED6D07C230"));
+            control_Line = new UserControl_Line();
 
-            PromptPointOptions getBeginOptions = new PromptPointOptions("The begin of the line: ");
+            myPaletteSet3.Add("form3", control_Line);
 
-            PromptPointResult getBeginResult = ed.GetPoint(getBeginOptions);
-
-            PromptPointOptions getEndOptions = new PromptPointOptions("The end of the line: ");
-
-            PromptPointResult getEndResult = ed.GetPoint(getEndOptions);
-
-            Database dwg = ed.Document.Database;
-
-            Transaction trans = dwg.TransactionManager.StartTransaction();
-
-            try
-            {
-                Line line = new Line(new Point3d(getBeginResult.Value.X, getBeginResult.Value.Y, 0), new Point3d(getEndResult.Value.X, getEndResult.Value.Y, 0));
-
-                BlockTableRecord btr = trans.GetObject(dwg.CurrentSpaceId, OpenMode.ForWrite) as BlockTableRecord;
-                btr.AppendEntity(line);
-
-                //добавляє примітив на лист                             
-                trans.AddNewlyCreatedDBObject(line, true);
-                //Завершення транзакції
-                trans.Commit();
-            }
-            catch (System.Exception ex)
-            {
-                ed.WriteMessage("Problem occured because " + ex.Message.ToString());
-            }
-            finally
-            {
-                trans.Dispose();
-            }
-
+            myPaletteSet3.Visible = true;
         }
-
-        [CommandMethod("pline")]
-        public void pline()
-        {
-            Editor ed = Autodesk.AutoCAD.ApplicationServices.Core.Application.DocumentManager.MdiActiveDocument.Editor;
-
-            PromptPointOptions getBeginOptions = new PromptPointOptions("The begin of the line: ");
-
-            PromptPointResult getBeginResult = ed.GetPoint(getBeginOptions);
-
-            PromptPointOptions getNextOptions = new PromptPointOptions("The next of the line: ");
-
-            PromptPointResult getNextResult = ed.GetPoint(getNextOptions);
-
-            PromptPointOptions getEndOptions = new PromptPointOptions("The end of the line: ");
-
-            PromptPointResult getEndResult = ed.GetPoint(getEndOptions);
-
-            Database dwg = ed.Document.Database;
-
-            Transaction trans = dwg.TransactionManager.StartTransaction();
-
-            try
-            {
-                Autodesk.AutoCAD.DatabaseServices.Polyline polyline = new Autodesk.AutoCAD.DatabaseServices.Polyline();
-
-                polyline.AddVertexAt(0, new Point2d(getBeginResult.Value.X, getBeginResult.Value.Y), 0, 0, 0);
-                polyline.AddVertexAt(1, new Point2d(getNextResult.Value.X, getNextResult.Value.Y), 0, 0, 0);
-                polyline.AddVertexAt(2, new Point2d(getEndResult.Value.X, getEndResult.Value.Y), 0, 0, 0);
-
-                BlockTableRecord btr = trans.GetObject(dwg.CurrentSpaceId, OpenMode.ForWrite) as BlockTableRecord;
-                btr.AppendEntity(polyline);
-
-                //добавляє примітив на лист                             
-                trans.AddNewlyCreatedDBObject(polyline, true);
-                //Завершення транзакції
-                trans.Commit();
-            }
-            catch (System.Exception ex)
-            {
-                ed.WriteMessage("Problem occured because " + ex.Message.ToString());
-            }
-            finally
-            {
-                trans.Dispose();
-            }
-        }
-
-        [CommandMethod("circle_01")]
-        public void circle1()
-        {
-            Editor ed = Autodesk.AutoCAD.ApplicationServices.Core.Application.DocumentManager.MdiActiveDocument.Editor;
-
-            PromptPointOptions getPointOptions = new PromptPointOptions("Pick Center Point: ");
-
-            PromptPointResult getPointResult = ed.GetPoint(getPointOptions);
-
-            if (getPointResult.Status == PromptStatus.OK)
-            {
-                PromptDistanceOptions getRadiusOptions = new PromptDistanceOptions("Pick Radius: ");
-
-                getRadiusOptions.BasePoint = getPointResult.Value;
-
-                getRadiusOptions.UseBasePoint = true;
-
-                PromptDoubleResult getRadiusResult = ed.GetDistance(getRadiusOptions);
-
-                if (getRadiusResult.Status == PromptStatus.OK)
-                {
-                    //База даних поточного чертежа
-                    Database dwg = ed.Document.Database;
-
-                    //Транзацкії для роботи з примітивами 
-                    Transaction trans = dwg.TransactionManager.StartTransaction();
-
-                    try
-                    {
-                        Circle circle = new Circle(getPointResult.Value, Vector3d.ZAxis, getRadiusResult.Value);
-                        //получаємо поточне середовище листа
-                        BlockTableRecord btr = trans.GetObject(dwg.CurrentSpaceId, OpenMode.ForWrite) as BlockTableRecord;
-                        btr.AppendEntity(circle);
-
-                        //добавляє примітив на лист                             
-                        trans.AddNewlyCreatedDBObject(circle, true);
-                        //Завершення транзакції
-                        trans.Commit();
-                    }
-                    catch (System.Exception ex)
-                    {
-                        ed.WriteMessage("Problem due to " + ex.Message.ToString());
-                    }
-                    finally
-                    {
-                        trans.Dispose(); //cборщик мусора
-                    }
-                }
-            }
-        }
-        [CommandMethod("circle_02")]
-        public void circle2()
-        {
-            Editor ed = Autodesk.AutoCAD.ApplicationServices.Core.Application.DocumentManager.MdiActiveDocument.Editor;
-
-            PromptPointOptions getPointOptions = new PromptPointOptions("Pick Center Point: ");
-
-            PromptPointResult getPointResult = ed.GetPoint(getPointOptions);
-
-            Database dwg = ed.Document.Database;
-
-            Vector3d x = dwg.Ucsxdir;
-            Vector3d y = dwg.Ucsydir;
-
-            Vector3d normalVec = x.CrossProduct(y);
-            Vector3d axisvec = normalVec.GetNormal();
-
-            
-
-            //Транзацкії для роботи з примітивами 
-            Transaction trans = dwg.TransactionManager.StartTransaction();
-
-            try
-            {
-                Ellipse ellipse = new Ellipse(new Point3d(getPointResult.Value.X, getPointResult.Value.Y,0), axisvec, new Vector3d(20, 0, 0), 0.5, 0, Math.PI * 2);
-
-                BlockTableRecord btr = trans.GetObject(dwg.CurrentSpaceId, OpenMode.ForWrite) as BlockTableRecord;
-                btr.AppendEntity(ellipse);
-
-                //добавляє примітив на лист                             
-                trans.AddNewlyCreatedDBObject(ellipse, true);
-                //Завершення транзакції
-                trans.Commit();
-            }
-            catch (System.Exception ex)
-            {
-                ed.WriteMessage("Problem due to " + ex.Message.ToString());
-            }
-            finally
-            {
-                trans.Dispose(); //cборщик мусора
-            }
-
-        }
-        [CommandMethod("square")]
-        public void square()
+        public void line(double x1, double y1, double x2, double y2)
         {
             Document doc = Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager.MdiActiveDocument;
             Database db = doc.Database;
 
             Editor ed = doc.Editor;
 
-            using (Transaction Tx = db.TransactionManager.StartTransaction())
+            using (DocumentLock docLock = doc.LockDocument())
             {
-                ObjectId ModelSpaceId = SymbolUtilityServices.GetBlockModelSpaceId(db);
+                using (Transaction Tx = db.TransactionManager.StartTransaction())
+                {
 
-                BlockTableRecord btr = Tx.GetObject(ModelSpaceId, OpenMode.ForWrite) as BlockTableRecord;
+                    ObjectId ModelSpaceId = SymbolUtilityServices.GetBlockModelSpaceId(db);
 
-                Point2d pt = new Point2d(0.0, 0.0);
-                ///Квадрат 1
-                Autodesk.AutoCAD.DatabaseServices.Polyline plBox = new Autodesk.AutoCAD.DatabaseServices.Polyline(4);
-                plBox.Normal = Vector3d.ZAxis;
-                plBox.AddVertexAt(0, pt, 0.0, -1.0, -1.0);
-                plBox.AddVertexAt(1, new Point2d(pt.X + 5, pt.Y), 0.0, -1.0, -1.0);
-                plBox.AddVertexAt(2, new Point2d(pt.X + 5, pt.Y + 5), 0.0, -1.0, -1.0);
-                plBox.AddVertexAt(3, new Point2d(pt.X, pt.Y + 5), 0.0, -1.0, -1.0);
-                plBox.Closed = true;
+                    BlockTableRecord btr = Tx.GetObject(ModelSpaceId, OpenMode.ForWrite) as BlockTableRecord;
 
-                ObjectId pLineId2;
-                pLineId2 = btr.AppendEntity(plBox);
-                ObjectIdCollection ObjIds1 = new ObjectIdCollection();
-                ObjIds1.Add(pLineId2);
+                    Line line = new Line(new Point3d(x1, y1, 0), new Point3d(x2, y2, 0));
 
-                ///Штриховка 1
-                Hatch oHatch = new Hatch();
-                Vector3d normal = new Vector3d(0.0, 0.0, 1.0);
-                oHatch.Normal = normal;
-                oHatch.Elevation = 0.0;
-                oHatch.PatternScale = 2.0;
-                oHatch.SetHatchPattern(HatchPatternType.PreDefined, "ZIGZAG");
+                    btr.AppendEntity(line);
 
-                btr.AppendEntity(oHatch);
-                Tx.AddNewlyCreatedDBObject(oHatch, true);
-                Tx.AddNewlyCreatedDBObject(plBox, true);
+                    Tx.AddNewlyCreatedDBObject(line, true);
+                    //Завершення транзакції
+                    Tx.Commit();
+                }
+            }
+        }
 
-                oHatch.Associative = true;
-                oHatch.AppendLoop((int)HatchLoopTypes.Default, ObjIds1);
-                oHatch.EvaluateHatch(true);
+        public PaletteSet myPaletteSet4;
+        UserControl3 control_PLine;
 
-                Tx.Commit();
+        [CommandMethod("start_pline")]
+        public void start_pline()
+        {
+            myPaletteSet4 = new PaletteSet("Pline", new Guid("0BD2504F-9F4E-4E35-8D81-5BED6D07C230"));
+            control_PLine = new UserControl3();
+
+            myPaletteSet4.Add("form4", control_PLine);
+
+            myPaletteSet4.Visible = true;
+        }
+
+        [CommandMethod("pline")]
+        public void pline(double x1, double y1, double x2, double y2, double x3, double y3)
+        {
+            Document doc = Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager.MdiActiveDocument;
+            Database db = doc.Database;
+
+            Editor ed = doc.Editor;
+
+            using (DocumentLock docLock = doc.LockDocument())
+            {
+                using (Transaction Tx = db.TransactionManager.StartTransaction())
+                {
+                    ObjectId ModelSpaceId = SymbolUtilityServices.GetBlockModelSpaceId(db);
+
+                    BlockTableRecord btr = Tx.GetObject(ModelSpaceId, OpenMode.ForWrite) as BlockTableRecord;
+
+                    Autodesk.AutoCAD.DatabaseServices.Polyline polyline = new Autodesk.AutoCAD.DatabaseServices.Polyline();
+
+                    polyline.AddVertexAt(0, new Point2d(x1, y1), 0, 0, 0);
+                    polyline.AddVertexAt(1, new Point2d(x2, y2), 0, 0, 0);
+                    polyline.AddVertexAt(2, new Point2d(x3, y3), 0, 0, 0);
+
+                    btr.AppendEntity(polyline);
+
+                    //добавляє примітив на лист                             
+                    Tx.AddNewlyCreatedDBObject(polyline, true);
+                    //Завершення транзакції
+                    Tx.Commit();
+                }
+            }
+        }
+
+        public PaletteSet myPaletteSet5;
+        UserControl4 control_circle01;
+
+        [CommandMethod("start_circle01")]
+        public void start_circle01()
+        {
+            myPaletteSet5 = new PaletteSet("Circle01", new Guid("0BD2504F-9F4E-4E35-8D81-5BED6D07C230"));
+            control_circle01 = new UserControl4();
+
+            myPaletteSet5.Add("form5", control_circle01);
+
+            myPaletteSet5.Visible = true;
+        }
+
+        [CommandMethod("circle_01")]
+        public void circle1(double x, double y, double r)
+        {
+            Document doc = Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager.MdiActiveDocument;
+            Database db = doc.Database;
+
+            Editor ed = doc.Editor;
+
+            using (DocumentLock docLock = doc.LockDocument())
+            {
+                using (Transaction Tx = db.TransactionManager.StartTransaction())
+                {
+                    ObjectId ModelSpaceId = SymbolUtilityServices.GetBlockModelSpaceId(db);
+
+                    BlockTableRecord btr = Tx.GetObject(ModelSpaceId, OpenMode.ForWrite) as BlockTableRecord;
+
+                    Circle circle = new Circle(new Point3d(x, y, 0), Vector3d.ZAxis, r);
+                    //получаємо поточне середовище листа
+                    btr.AppendEntity(circle);
+
+                    //добавляє примітив на лист                             
+                    Tx.AddNewlyCreatedDBObject(circle, true);
+                    //Завершення транзакції
+                    Tx.Commit();
+                }
+            }
+        }
+
+        public PaletteSet myPaletteSet6;
+        UserControl5 control_circle02;
+        [CommandMethod("start_circle02")]
+        public void start_circle02()
+        {
+            myPaletteSet6 = new PaletteSet("Circle02", new Guid("0BD2504F-9F4E-4E35-8D81-5BED6D07C230"));
+            control_circle02 = new UserControl5();
+
+            myPaletteSet6.Add("form6", control_circle02);
+
+            myPaletteSet6.Visible = true;
+        }
+        [CommandMethod("circle_02")]
+        public void circle2(double x1, double y1, double r)
+        {
+
+
+            Document doc = Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager.MdiActiveDocument;
+            Database db = doc.Database;
+
+            Vector3d x = db.Ucsxdir;
+            Vector3d y = db.Ucsydir;
+
+            Vector3d normalVec = x.CrossProduct(y);
+            Vector3d axisvec = normalVec.GetNormal();
+
+            using (DocumentLock docLock = doc.LockDocument())
+            {
+                using (Transaction Tx = db.TransactionManager.StartTransaction())
+                {
+                    ObjectId ModelSpaceId = SymbolUtilityServices.GetBlockModelSpaceId(db);
+
+                    BlockTableRecord btr = Tx.GetObject(ModelSpaceId, OpenMode.ForWrite) as BlockTableRecord;
+
+                    Ellipse ellipse = new Ellipse(new Point3d(x1, y1, 0), axisvec, new Vector3d(20, 0, 0), r, 0, Math.PI * 2);
+
+                    btr.AppendEntity(ellipse);
+
+                    //добавляє примітив на лист                             
+                    Tx.AddNewlyCreatedDBObject(ellipse, true);
+                    //Завершення транзакції
+                    Tx.Commit();
+                }
+            }
+        }
+
+
+        public PaletteSet myPaletteSet7;
+        UserControl6 control_square;
+        [CommandMethod("start_square")]
+        public void start_square()
+        {
+            myPaletteSet7 = new PaletteSet("Square", new Guid("0BD2504F-9F4E-4E35-8D81-5BED6D07C230"));
+            control_square = new UserControl6();
+
+            myPaletteSet7.Add("form7", control_square);
+
+            myPaletteSet7.Visible = true;
+        }
+        [CommandMethod("square")]
+        public void square(double x1, double y1)
+        {
+            Document doc = Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager.MdiActiveDocument;
+            Database db = doc.Database;
+
+            Editor ed = doc.Editor;
+
+            using (DocumentLock docLock = doc.LockDocument())
+            {
+                using (Transaction Tx = db.TransactionManager.StartTransaction())
+                {
+                    ObjectId ModelSpaceId = SymbolUtilityServices.GetBlockModelSpaceId(db);
+
+                    BlockTableRecord btr = Tx.GetObject(ModelSpaceId, OpenMode.ForWrite) as BlockTableRecord;
+
+                    Point2d pt = new Point2d(x1, y1);
+                    ///Квадрат 1
+                    Autodesk.AutoCAD.DatabaseServices.Polyline plBox = new Autodesk.AutoCAD.DatabaseServices.Polyline(4);
+                    plBox.Normal = Vector3d.ZAxis;
+                    plBox.AddVertexAt(0, pt, 0.0, -1.0, -1.0);
+                    plBox.AddVertexAt(1, new Point2d(pt.X + 5, pt.Y), 0.0, -1.0, -1.0);
+                    plBox.AddVertexAt(2, new Point2d(pt.X + 5, pt.Y + 5), 0.0, -1.0, -1.0);
+                    plBox.AddVertexAt(3, new Point2d(pt.X, pt.Y + 5), 0.0, -1.0, -1.0);
+                    plBox.Closed = true;
+
+                    ObjectId pLineId2;
+                    pLineId2 = btr.AppendEntity(plBox);
+                    ObjectIdCollection ObjIds1 = new ObjectIdCollection();
+                    ObjIds1.Add(pLineId2);
+
+                    ///Штриховка 1
+                    Hatch oHatch = new Hatch();
+                    Vector3d normal = new Vector3d(0.0, 0.0, 1.0);
+                    oHatch.Normal = normal;
+                    oHatch.Elevation = 0.0;
+                    oHatch.PatternScale = 2.0;
+                    oHatch.SetHatchPattern(HatchPatternType.PreDefined, "ZIGZAG");
+
+                    btr.AppendEntity(oHatch);
+                    Tx.AddNewlyCreatedDBObject(oHatch, true);
+                    Tx.AddNewlyCreatedDBObject(plBox, true);
+
+                    oHatch.Associative = true;
+                    oHatch.AppendLoop((int)HatchLoopTypes.Default, ObjIds1);
+                    oHatch.EvaluateHatch(true);
+
+                    Tx.Commit();
+                }
             }
         }
         public PaletteSet myPaletteSet2;
@@ -929,7 +937,7 @@ namespace pr6new
                 myPaletteSet2.Add("form1", usercontrol2);
             }
 
-            myPaletteSet2.Visible = true;          
+            myPaletteSet2.Visible = true;
 
             using (Transaction Tx = db.TransactionManager.StartTransaction())
             {
@@ -939,7 +947,7 @@ namespace pr6new
 
                 Circle circle = new Circle(new Point3d(0, 0, 0), Vector3d.ZAxis, 2); //коло
 
-                
+
                 Point2d pt = new Point2d(0.0, 0.0);
                 ///Квадрат 1
                 Autodesk.AutoCAD.DatabaseServices.Polyline plBox = new Autodesk.AutoCAD.DatabaseServices.Polyline(4);
@@ -1056,7 +1064,7 @@ namespace pr6new
                         ed.WriteMessage("Problem occured because " + ex.Message.ToString());
                     }
                 }
-            }              
+            }
             else
             {
                 MessageBox.Show("Точка не входить в область");
@@ -1065,94 +1073,65 @@ namespace pr6new
 
         }
 
-        //Lab 10 User Interface
-
-        //Context Menu
-        /*public class adskClass : Class1, IExtensionApplication
+        //Lab13
+        [CommandMethod("lab13")]
+        public void start_lab13()
         {
-            ContextMenuExtension myContextMenu;
-            private void addContextMenu()
-            {
-                Editor ed = Autodesk.AutoCAD.ApplicationServices.Core.Application.DocumentManager.MdiActiveDocument.Editor;
+            Lab13 form = new Lab13();
+            form.Visible = true;
+        }
 
-                try
+        public void lab13_go(double A1, double A2, double B1, double B2, double C1)
+        {
+            Document doc = Autodesk.AutoCAD.ApplicationServices.Core.Application.DocumentManager.MdiActiveDocument;
+
+            Editor ed = doc.Editor;
+
+            Database dwg = doc.Database;
+
+            using (DocumentLock docLock = doc.LockDocument())
+            {
+                using (Transaction Tx = dwg.TransactionManager.StartTransaction())
                 {
-                    myContextMenu = new ContextMenuExtension();
-                    myContextMenu.Title = "Circle Jig";
+                    ObjectId ModelSpaceId = SymbolUtilityServices.GetBlockModelSpaceId(dwg);
 
-                    Autodesk.AutoCAD.Windows.MenuItem mi = new Autodesk.AutoCAD.Windows.MenuItem("Run Circle Jig");
+                    BlockTableRecord btr = Tx.GetObject(ModelSpaceId, OpenMode.ForWrite) as BlockTableRecord;
 
-                    mi.Click += new EventHandler(CallBackOnClick);
+                    double X1 = 100;
+                    double Y1 = 100;
+                    double C1_1 = (A1 - C1) / 2;
+                    ///Квадрат 1
+                    Autodesk.AutoCAD.DatabaseServices.Polyline plBox = new Autodesk.AutoCAD.DatabaseServices.Polyline(6);
+                    plBox.Normal = Vector3d.ZAxis;
+                    plBox.AddVertexAt(0, new Point2d(X1, Y1), 0.0, -1.0, -1.0);
+                    plBox.AddVertexAt(1, new Point2d(X1 - C1_1, Y1), 0.0, -1.0, -1.0);
+                    X1 -= C1_1;
+                    plBox.AddVertexAt(2, new Point2d(X1, Y1 - A2), 0.0, -1.0, -1.0);
+                    Y1 -= A2;
+                    plBox.AddVertexAt(3, new Point2d(X1 + A1, Y1), 0.0, -1.0, -1.0);
+                    X1 += A1;
+                    plBox.AddVertexAt(4, new Point2d(X1 , Y1 + A2), 0.0, -1.0, -1.0);
+                    Y1 += A2;
+                    plBox.AddVertexAt(5, new Point2d(X1 - C1_1, Y1), 0.0, -1.0, -1.0);
+                    X1 -= C1_1;
 
-                    myContextMenu.MenuItems.Add(mi);
-                    Autodesk.AutoCAD.ApplicationServices.Application.AddDefaultContextMenuExtension(myContextMenu);
+                    //Circle
+                    X1 = 100 - C1_1 + (A1 / 2);
+                    Y1 = 100  - A2 + B2;
+                    Circle circle = new Circle(new Point3d(X1, Y1, 0), Vector3d.ZAxis, B1 / 2);
+
+                    //Arc
+                    Arc arc = new Arc();
+
+                    btr.AppendEntity(plBox);
+                    btr.AppendEntity(circle);
+
+                    Tx.AddNewlyCreatedDBObject(plBox, true);
+                    Tx.AddNewlyCreatedDBObject(circle, true);
+
+                    Tx.Commit();
                 }
-                catch (System.Exception ex)
-                {
-                    ed.WriteMessage("Error Adding Context Menu: " + ex.Message);
-                }
             }
-            private void RemoveContextMenu()
-            {
-                Editor ed = Autodesk.AutoCAD.ApplicationServices.Core.Application.DocumentManager.MdiActiveDocument.Editor;
-                try
-                {
-                    if (myContextMenu != null)
-                    {
-                        Autodesk.AutoCAD.ApplicationServices.Application.RemoveDefaultContextMenuExtension(myContextMenu);
-                        myContextMenu = null;
-                    }
-                }
-                catch (System.Exception ex)
-                {
-                    ed.WriteMessage("Error Remove Context Menu: " + ex.Message);
-                }
-            }
-            private void CallBackOnClick(object sender, EventArgs e)
-            {
-                using (DocumentLock dockLock = Autodesk.AutoCAD.ApplicationServices.Core.Application.DocumentManager.MdiActiveDocument.LockDocument())
-                {
-                    Class1 class1 = new Class1();
-                    class1.CircleJig();
-                }
-            }
-
-            public void Initialize()
-            {
-                addContextMenu();
-                AddTabDialog();
-            }
-
-            public void Terminate()
-            {
-                RemoveContextMenu();
-            }
-
-            //Dialog
-            public static string myVariable;
-
-            public static void AddTabDialog()
-            {
-                Autodesk.AutoCAD.ApplicationServices.Application.DisplayingOptionDialog += new TabbedDialogEventHandler(TabHandler);
-            }
-            private static void TabHandler(object sender, TabbedDialogEventArgs e)
-            {
-                myCustomTab myCustomTab = new myCustomTab();
-
-                TabbedDialogAction tabbedDialogAct = new TabbedDialogAction(myCustomTab.OnOk);
-
-                TabbedDialogExtension tabbedDialogExt = new TabbedDialogExtension(myCustomTab, tabbedDialogAct);
-
-                e.AddTab("Value for custom variable", tabbedDialogExt);
-            }
-
-            [CommandMethod("testTab")]
-            public void TestTab()
-            {
-
-                Editor ed = Autodesk.AutoCAD.ApplicationServices.Core.Application.DocumentManager.MdiActiveDocument.Editor;
-                ed.WriteMessage(myVariable.ToString());
-            }
-        }*/
+        }
     }
 }
