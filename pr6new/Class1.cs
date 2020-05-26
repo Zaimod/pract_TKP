@@ -1080,8 +1080,10 @@ namespace pr6new
             Lab13 form = new Lab13();
             form.Visible = true;
         }
-
-        public void lab13_go(double A1, double A2, double B1, double B2, double C1)
+        Autodesk.AutoCAD.DatabaseServices.Polyline plBox;
+        Circle circle;
+        Arc arc;
+        public void lab13_go(double A1, double A2, double B1, double B2, double C1, double C4, int line_weight1, int line_color1)
         {
             Document doc = Autodesk.AutoCAD.ApplicationServices.Core.Application.DocumentManager.MdiActiveDocument;
 
@@ -1093,6 +1095,74 @@ namespace pr6new
             {
                 using (Transaction Tx = dwg.TransactionManager.StartTransaction())
                 {
+                    ///Layer1
+                    LayerTable acLyrTbl = Tx.GetObject(dwg.LayerTableId, OpenMode.ForRead) as LayerTable;
+                    
+                    string sLayerName = "Layer1";
+                    LayerTableRecord acLyrTblRec;
+                    if (acLyrTbl.Has(sLayerName) == false)
+                    {
+                        acLyrTblRec = new LayerTableRecord();
+
+                        acLyrTblRec.Color = Autodesk.AutoCAD.Colors.Color.FromColorIndex(Autodesk.AutoCAD.Colors.ColorMethod.ByAci, 1);
+                        acLyrTblRec.Name = sLayerName;
+
+                        acLyrTbl.UpgradeOpen();
+                        
+                        acLyrTbl.Add(acLyrTblRec);
+                        Tx.AddNewlyCreatedDBObject(acLyrTblRec, true);
+                    }
+                    else
+                    {
+                        acLyrTblRec = Tx.GetObject(acLyrTbl[sLayerName], OpenMode.ForRead) as LayerTableRecord;
+                    }
+                    LinetypeTable acLinTbl = Tx.GetObject(dwg.LinetypeTableId,
+                                                 OpenMode.ForRead) as LinetypeTable;
+      
+                    if (acLinTbl.Has("Center") == true)
+                    {
+                        // Upgrade the Layer Table Record for write
+                        acLyrTblRec.UpgradeOpen();
+
+                        // Set the linetype for the layer
+                        acLyrTblRec.LinetypeObjectId = acLinTbl["Center"];
+                    }
+                    //Layer2
+                    LayerTable acLyrTbl2 = Tx.GetObject(dwg.LayerTableId, OpenMode.ForRead) as LayerTable;
+
+                    string sLayerName2 = "Layer2";
+                    LayerTableRecord acLyrTblRec2;
+                    if (acLyrTbl2.Has(sLayerName2) == false)
+                    {
+                        acLyrTblRec2 = new LayerTableRecord();
+
+                        acLyrTblRec2.Color = Autodesk.AutoCAD.Colors.Color.FromColorIndex(Autodesk.AutoCAD.Colors.ColorMethod.ByAci, 1);
+                        acLyrTblRec2.Name = sLayerName2;
+
+                        acLyrTbl2.UpgradeOpen();
+
+                        acLyrTbl2.Add(acLyrTblRec2);
+                        Tx.AddNewlyCreatedDBObject(acLyrTblRec2, true);
+                    }
+                    else
+                    {
+                        acLyrTblRec2 = Tx.GetObject(acLyrTbl2[sLayerName2], OpenMode.ForRead) as LayerTableRecord;
+                    }
+                    LinetypeTable acLinTbl2 = Tx.GetObject(dwg.LinetypeTableId,
+                                                 OpenMode.ForRead) as LinetypeTable;
+
+                    if (acLinTbl2.Has("Center") == true)
+                    {
+                        // Upgrade the Layer Table Record for write
+                        acLyrTblRec2.UpgradeOpen();
+
+                        // Set the linetype for the layer
+                        acLyrTblRec2.LinetypeObjectId = acLinTbl2["Center"];
+                    }
+                    ////////////////////
+
+
+
                     ObjectId ModelSpaceId = SymbolUtilityServices.GetBlockModelSpaceId(dwg);
 
                     BlockTableRecord btr = Tx.GetObject(ModelSpaceId, OpenMode.ForWrite) as BlockTableRecord;
@@ -1101,7 +1171,7 @@ namespace pr6new
                     double Y1 = 100;
                     double C1_1 = (A1 - C1) / 2;
                     ///Квадрат 1
-                    Autodesk.AutoCAD.DatabaseServices.Polyline plBox = new Autodesk.AutoCAD.DatabaseServices.Polyline(6);
+                    plBox = new Autodesk.AutoCAD.DatabaseServices.Polyline(6);
                     plBox.Normal = Vector3d.ZAxis;
                     plBox.AddVertexAt(0, new Point2d(X1, Y1), 0.0, -1.0, -1.0);
                     plBox.AddVertexAt(1, new Point2d(X1 - C1_1, Y1), 0.0, -1.0, -1.0);
@@ -1110,25 +1180,98 @@ namespace pr6new
                     Y1 -= A2;
                     plBox.AddVertexAt(3, new Point2d(X1 + A1, Y1), 0.0, -1.0, -1.0);
                     X1 += A1;
+                    Point3d point1 = new Point3d(X1, Y1, 0);
                     plBox.AddVertexAt(4, new Point2d(X1 , Y1 + A2), 0.0, -1.0, -1.0);
                     Y1 += A2;
+                    Point3d point2 = new Point3d(X1, Y1, 0);
+                    Point3d point3 = new Point3d(X1, Y1 / 2, 0);
                     plBox.AddVertexAt(5, new Point2d(X1 - C1_1, Y1), 0.0, -1.0, -1.0);
                     X1 -= C1_1;
+                    plBox.Layer = sLayerName;
 
                     //Circle
                     X1 = 100 - C1_1 + (A1 / 2);
                     Y1 = 100  - A2 + B2;
-                    Circle circle = new Circle(new Point3d(X1, Y1, 0), Vector3d.ZAxis, B1 / 2);
+                    circle = new Circle(new Point3d(X1, Y1, 0), Vector3d.ZAxis, B1 / 2);
+                    circle.Layer = sLayerName;
 
                     //Arc
-                    Arc arc = new Arc();
+                    X1 = 100 - C1_1 + (A1 / 2);
+                    Y1 = 100;
+                    arc = new Arc(new Point3d(X1, Y1, 0), C4, Math.PI, 2 * Math.PI);
+                    arc.Layer = sLayerName;
+
+                    //////Layer1
+                    if (line_weight1 == 0)
+                    {
+                        plBox.LineWeight = LineWeight.LineWeight000;
+                        circle.LineWeight = LineWeight.LineWeight000;
+                        arc.LineWeight = LineWeight.LineWeight000;
+                    }
+                    else if (line_weight1 == 1)
+                    {
+                        plBox.LineWeight = LineWeight.LineWeight020;
+                        circle.LineWeight = LineWeight.LineWeight020;
+                        arc.LineWeight = LineWeight.LineWeight020;
+                    }
+                    else if (line_weight1 == 2)
+                    {
+                        plBox.LineWeight = LineWeight.LineWeight050;
+                        circle.LineWeight = LineWeight.LineWeight050;
+                        arc.LineWeight = LineWeight.LineWeight050;
+                    }
+                    else if (line_weight1 == 3)
+                    {
+                        plBox.LineWeight = LineWeight.LineWeight100;
+                        circle.LineWeight = LineWeight.LineWeight100;
+                        arc.LineWeight = LineWeight.LineWeight100;
+                    }
+                    else if (line_weight1 == 4)
+                    {
+                        plBox.LineWeight = LineWeight.LineWeight200;
+                        circle.LineWeight = LineWeight.LineWeight200;
+                        arc.LineWeight = LineWeight.LineWeight200;
+                    }
+
+                    if(line_color1 == 0)
+                    {
+                        plBox.Color = Autodesk.AutoCAD.Colors.Color.FromRgb(255, 0, 0);
+                        circle.Color = Autodesk.AutoCAD.Colors.Color.FromRgb(255, 0, 0);
+                        arc.Color = Autodesk.AutoCAD.Colors.Color.FromRgb(255, 0, 0);
+                    }
+                    if (line_color1 == 1)
+                    {
+                        plBox.Color = Autodesk.AutoCAD.Colors.Color.FromRgb(0, 255, 0);
+                        circle.Color = Autodesk.AutoCAD.Colors.Color.FromRgb(0, 255, 0);
+                        arc.Color = Autodesk.AutoCAD.Colors.Color.FromRgb(0, 255, 0);
+                    }
+                    if (line_color1 == 2)
+                    {
+                        plBox.Color = Autodesk.AutoCAD.Colors.Color.FromRgb(0, 0, 255);
+                        circle.Color = Autodesk.AutoCAD.Colors.Color.FromRgb(0, 0, 255);
+                        arc.Color = Autodesk.AutoCAD.Colors.Color.FromRgb(0, 0, 255);
+                    }
+
+                    RotatedDimension acRotDim = new RotatedDimension();
+                    acRotDim.SetDatabaseDefaults();
+                    acRotDim.XLine1Point = point1;
+                    acRotDim.XLine2Point = point2;
+                    acRotDim.Rotation = Math.PI / 2;
+                    acRotDim.DimLinePoint = point3;
+                    acRotDim.DimensionStyle = dwg.Dimstyle;
+                    acRotDim.Layer = sLayerName2;
 
                     btr.AppendEntity(plBox);
                     btr.AppendEntity(circle);
+                    btr.AppendEntity(arc);
+                    btr.AppendEntity(acRotDim);
 
                     Tx.AddNewlyCreatedDBObject(plBox, true);
                     Tx.AddNewlyCreatedDBObject(circle, true);
+                    Tx.AddNewlyCreatedDBObject(arc, true);
+                    Tx.AddNewlyCreatedDBObject(acRotDim, true);
 
+                    
                     Tx.Commit();
                 }
             }
