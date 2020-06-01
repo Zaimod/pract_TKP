@@ -20,7 +20,7 @@ namespace pr6new
 
         private void button1_Click(object sender, EventArgs e)
         {         
-            class1.lab13_go(Convert.ToDouble(textBox1.Text), Convert.ToDouble(textBox2.Text), Convert.ToDouble(textBox3.Text), Convert.ToDouble(textBox4.Text), Convert.ToDouble(textBox5.Text), Convert.ToDouble(textBox8.Text), Convert.ToInt32(comboBox3.SelectedIndex), Convert.ToInt32(comboBox1.SelectedIndex));
+            class1.lab13_go(Convert.ToDouble(textBox1.Text), Convert.ToDouble(textBox2.Text), Convert.ToDouble(textBox3.Text), Convert.ToDouble(textBox4.Text), Convert.ToDouble(textBox5.Text), Convert.ToDouble(textBox8.Text), Convert.ToInt32(comboBox3.SelectedIndex), Convert.ToInt32(comboBox1.SelectedIndex), Convert.ToInt32(comboBox4.SelectedIndex), Convert.ToInt32(comboBox2.SelectedIndex), checkBox1.Checked);
         }
 
         private void button2_Click(object sender, EventArgs e)

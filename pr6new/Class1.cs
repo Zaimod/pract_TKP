@@ -969,9 +969,11 @@ namespace pr6new
                 ObjectId pLineId;
                 pLineId = btr.AppendEntity(circle);
                 Tx.AddNewlyCreatedDBObject(circle, true); //додаємо коло на ескіз
-
                 ObjectIdCollection ObjIds = new ObjectIdCollection();
                 ObjIds.Add(pLineId);
+
+                 
+
                 ///Штриховка 1
                 Hatch oHatch = new Hatch();
                 Vector3d normal = new Vector3d(0.0, 0.0, 1.0);
@@ -1083,7 +1085,7 @@ namespace pr6new
         Autodesk.AutoCAD.DatabaseServices.Polyline plBox;
         Circle circle;
         Arc arc;
-        public void lab13_go(double A1, double A2, double B1, double B2, double C1, double C4, int line_weight1, int line_color1)
+        public void lab13_go(double A1, double A2, double B1, double B2, double C1, double C4, int line_weight1, int line_color1, int line_weight2, int line_color2, bool layer2)
         {
             Document doc = Autodesk.AutoCAD.ApplicationServices.Core.Application.DocumentManager.MdiActiveDocument;
 
@@ -1095,6 +1097,7 @@ namespace pr6new
             {
                 using (Transaction Tx = dwg.TransactionManager.StartTransaction())
                 {
+                    
                     ///Layer1
                     LayerTable acLyrTbl = Tx.GetObject(dwg.LayerTableId, OpenMode.ForRead) as LayerTable;
                     
@@ -1138,10 +1141,10 @@ namespace pr6new
 
                         acLyrTblRec2.Color = Autodesk.AutoCAD.Colors.Color.FromColorIndex(Autodesk.AutoCAD.Colors.ColorMethod.ByAci, 1);
                         acLyrTblRec2.Name = sLayerName2;
-
+                        acLyrTblRec2.IsOff = true;
                         acLyrTbl2.UpgradeOpen();
-
                         acLyrTbl2.Add(acLyrTblRec2);
+                        
                         Tx.AddNewlyCreatedDBObject(acLyrTblRec2, true);
                     }
                     else
@@ -1232,7 +1235,6 @@ namespace pr6new
                         circle.LineWeight = LineWeight.LineWeight200;
                         arc.LineWeight = LineWeight.LineWeight200;
                     }
-
                     if(line_color1 == 0)
                     {
                         plBox.Color = Autodesk.AutoCAD.Colors.Color.FromRgb(255, 0, 0);
@@ -1251,15 +1253,56 @@ namespace pr6new
                         circle.Color = Autodesk.AutoCAD.Colors.Color.FromRgb(0, 0, 255);
                         arc.Color = Autodesk.AutoCAD.Colors.Color.FromRgb(0, 0, 255);
                     }
-
+                    //Layer2
                     RotatedDimension acRotDim = new RotatedDimension();
                     acRotDim.SetDatabaseDefaults();
                     acRotDim.XLine1Point = point1;
                     acRotDim.XLine2Point = point2;
+
                     acRotDim.Rotation = Math.PI / 2;
                     acRotDim.DimLinePoint = point3;
                     acRotDim.DimensionStyle = dwg.Dimstyle;
                     acRotDim.Layer = sLayerName2;
+
+                    if (line_weight2 == 0)
+                    {
+                        acRotDim.LineWeight = LineWeight.LineWeight000;
+                    }
+                    else if (line_weight2 == 1)
+                    {
+                        acRotDim.LineWeight = LineWeight.LineWeight020;
+                    }
+                    else if (line_weight2 == 2)
+                    {
+                        acRotDim.LineWeight = LineWeight.LineWeight050;
+                    }
+                    else if (line_weight2 == 3)
+                    {
+                        acRotDim.LineWeight = LineWeight.LineWeight100;
+                    }
+                    else if (line_weight2 == 4)
+                    {
+                        acRotDim.LineWeight = LineWeight.LineWeight200;
+                    }
+                    if (line_color2 == 0)
+                    {
+                        acRotDim.Color = Autodesk.AutoCAD.Colors.Color.FromRgb(255, 0, 0);
+                    }
+                    if (line_color2 == 1)
+                    {
+                        acRotDim.Color = Autodesk.AutoCAD.Colors.Color.FromRgb(0, 255, 0);
+                    }
+                    if (line_color2 == 2)
+                    {
+                        acRotDim.Color = Autodesk.AutoCAD.Colors.Color.FromRgb(0, 0, 255);
+                    }
+
+                    if(layer2 == true)
+                    {
+                        acLyrTblRec2.IsOff = false;
+                    }
+
+
 
                     btr.AppendEntity(plBox);
                     btr.AppendEntity(circle);
@@ -1270,7 +1313,6 @@ namespace pr6new
                     Tx.AddNewlyCreatedDBObject(circle, true);
                     Tx.AddNewlyCreatedDBObject(arc, true);
                     Tx.AddNewlyCreatedDBObject(acRotDim, true);
-
                     
                     Tx.Commit();
                 }
