@@ -1318,5 +1318,266 @@ namespace pr6new
                 }
             }
         }
+
+        //lab14
+        public Form_Paint form;
+
+        public Point3d GetPoint(string message)
+        {
+            Document acDoc = Autodesk.AutoCAD.ApplicationServices.Core.Application.DocumentManager.MdiActiveDocument;
+
+            PromptPointResult pPtRes;
+            PromptPointOptions pPtOpts = new PromptPointOptions("");
+
+            pPtOpts.Message = message;
+            pPtRes = acDoc.Editor.GetPoint(pPtOpts);
+
+            return pPtRes.Value;
+        }
+
+        public void CreateDimText(Dimension dimension)
+        {
+            if (form.DimTextForm.TextHeight.HasValue)
+                dimension.Dimtxt = form.DimTextForm.TextHeight.Value;
+
+            if (form.DimTextForm.TextRotation.HasValue)
+                dimension.TextRotation = form.DimTextForm.TextRotation.Value;
+
+            if (form.DimTextForm.TextColor != null)
+                dimension.Dimclrt = form.DimTextForm.TextColor;
+        }
+
+        [CommandMethod("Draw_Text")]
+        public void lab14()
+        {
+            form = new Form_Paint();
+            if (form.ShowDialog() != DialogResult.OK)
+            {
+                return;
+            }
+
+            Document acDoc = Autodesk.AutoCAD.ApplicationServices.Core.Application.DocumentManager.MdiActiveDocument;
+            Database acCurDb = acDoc.Database;
+
+            using (Transaction acTrans = acCurDb.TransactionManager.StartTransaction())
+            {
+                BlockTable acBlkTbl;
+                acBlkTbl = acTrans.GetObject(acCurDb.BlockTableId, OpenMode.ForRead) as BlockTable;
+
+                BlockTableRecord acBlkTblRec;
+
+                if (form.DimType != "")
+                {
+                    if (form.DimType == "Linear Dimensions")
+                    {
+                        acBlkTblRec = acTrans.GetObject(acBlkTbl[BlockTableRecord.ModelSpace], OpenMode.ForWrite) as BlockTableRecord;
+                        AlignedDimension acAliDim = new AlignedDimension();
+
+                        acAliDim.SetDatabaseDefaults();
+                        acAliDim.XLine1Point = GetPoint("Перша точка:");
+                        acAliDim.XLine2Point = GetPoint("Друга точка:");
+                        acAliDim.DimLinePoint = GetPoint("Розташування:");
+                        acAliDim.DimensionStyle = acCurDb.Dimstyle;
+                        acAliDim.Color = form.DimColor;
+                        CreateDimText(acAliDim);
+
+                        acAliDim.Dimjust = 2;
+                        acAliDim.Dimtih = true;
+
+                        acBlkTblRec.AppendEntity(acAliDim);
+                        acTrans.AddNewlyCreatedDBObject(acAliDim, true);
+                    }
+
+                    if (form.DimType == "Radial Dimensions")
+                    {
+                        acBlkTblRec = acTrans.GetObject(acBlkTbl[BlockTableRecord.ModelSpace], OpenMode.ForWrite) as BlockTableRecord;
+                        RadialDimension acRadDim = new RadialDimension();
+                        acRadDim.SetDatabaseDefaults();
+                        acRadDim.Center = GetPoint("Центр:");
+                        acRadDim.ChordPoint = GetPoint("Хорд:");
+                        acRadDim.LeaderLength = 5;
+                        acRadDim.DimensionStyle = acCurDb.Dimstyle;
+                        acRadDim.Color = form.DimColor;
+                        CreateDimText(acRadDim);
+
+                        acBlkTblRec.AppendEntity(acRadDim);
+                        acTrans.AddNewlyCreatedDBObject(acRadDim, true);
+                    }
+
+                    if (form.DimType == "Angular Dimensions")
+                    {
+                        acBlkTblRec = acTrans.GetObject(acBlkTbl[BlockTableRecord.ModelSpace], OpenMode.ForWrite) as BlockTableRecord;
+                        Point3AngularDimension acLinAngDim = new Point3AngularDimension();
+                        acLinAngDim.SetDatabaseDefaults();
+                        acLinAngDim.TextDefinedSize = new Vector2d(2, 0);
+                        acLinAngDim.CenterPoint = GetPoint("Центр");
+                        acLinAngDim.XLine1Point = GetPoint("X1");
+                        acLinAngDim.XLine2Point = GetPoint("X2");
+                        acLinAngDim.ArcPoint = GetPoint("Дуга");
+                        acLinAngDim.DimensionStyle = acCurDb.Dimstyle;
+                        acLinAngDim.Color = form.DimColor;
+                        CreateDimText(acLinAngDim);
+
+                        acBlkTblRec.AppendEntity(acLinAngDim);
+                        acTrans.AddNewlyCreatedDBObject(acLinAngDim, true);
+                    }
+
+                    if (form.DimType == "Jogged Radius Dimensions")
+                    {
+                        acBlkTblRec = acTrans.GetObject(acBlkTbl[BlockTableRecord.ModelSpace], OpenMode.ForWrite) as BlockTableRecord;
+                        RadialDimensionLarge acRadDimLrg = new RadialDimensionLarge();
+                        acRadDimLrg.SetDatabaseDefaults();
+                        acRadDimLrg.Center = GetPoint("Set Center");
+                        acRadDimLrg.ChordPoint = GetPoint("Set Chord ");
+                        acRadDimLrg.OverrideCenter = GetPoint("Set OverCenter");
+                        acRadDimLrg.JogPoint = GetPoint("Set Jog");
+                        acRadDimLrg.JogAngle = 0.707;
+                        acRadDimLrg.DimensionStyle = acCurDb.Dimstyle;
+                        acRadDimLrg.Color = form.DimColor;
+                        CreateDimText(acRadDimLrg);
+
+                        acBlkTblRec.AppendEntity(acRadDimLrg);
+                        acTrans.AddNewlyCreatedDBObject(acRadDimLrg, true);
+                    }
+
+                    if (form.DimType == "Arc Length Dimensions")
+                    {
+                        acBlkTblRec = acTrans.GetObject(acBlkTbl[BlockTableRecord.ModelSpace], OpenMode.ForWrite) as BlockTableRecord;
+                        ArcDimension acArcDim = new ArcDimension(
+                                                GetPoint("Центр"),
+                                                GetPoint("X1"),
+                                                GetPoint("X2"),
+                                                GetPoint("Дуга"),
+                                                "<>",
+                                                acCurDb.Dimstyle);
+
+                        acArcDim.SetDatabaseDefaults();
+                        acArcDim.Color = form.DimColor;
+                        CreateDimText(acArcDim);
+
+                        acBlkTblRec.AppendEntity(acArcDim);
+                        acTrans.AddNewlyCreatedDBObject(acArcDim, true);
+                    }
+
+                    if (form.DimType == "Ordinate Dimensions")
+                    {
+                        acBlkTblRec = acTrans.GetObject(acBlkTbl[BlockTableRecord.ModelSpace], OpenMode.ForWrite) as BlockTableRecord;
+                        OrdinateDimension acOrdDim = new OrdinateDimension();
+                        acOrdDim.SetDatabaseDefaults();
+                        acOrdDim.UsingXAxis = true;
+                        acOrdDim.DefiningPoint = GetPoint("Set Defining point");
+                        acOrdDim.LeaderEndPoint = GetPoint("Set Leader End");
+                        acOrdDim.DimensionStyle = acCurDb.Dimstyle;
+                        acOrdDim.Color = form.DimColor;
+                        CreateDimText(acOrdDim);
+
+                        acBlkTblRec.AppendEntity(acOrdDim);
+                        acTrans.AddNewlyCreatedDBObject(acOrdDim, true);
+                    }
+                }
+                else
+                {
+                    acBlkTblRec = acTrans.GetObject(acBlkTbl[BlockTableRecord.ModelSpace], OpenMode.ForWrite) as BlockTableRecord;
+                    AlignedDimension acAliDim = new AlignedDimension();
+                    acAliDim.SetDatabaseDefaults();
+                    acAliDim.XLine1Point = GetPoint("Set 1st point:");
+                    acAliDim.XLine2Point = GetPoint("Set 2nd poind");
+                    acAliDim.DimLinePoint = GetPoint("Set extension:");
+                    acAliDim.DimensionStyle = acCurDb.Dimstyle;
+                    acAliDim.Color = form.DimColor;
+                    CreateDimText(acAliDim);
+
+                    acBlkTblRec.AppendEntity(acAliDim);
+                    acTrans.AddNewlyCreatedDBObject(acAliDim, true);
+                }
+
+                acTrans.Commit();
+            }
+        }
+
+        [CommandMethod("Draw_Shape")]
+        public void DrawShape()
+        {
+            Document acDoc = Autodesk.AutoCAD.ApplicationServices.Core.Application.DocumentManager.MdiActiveDocument;
+            Database dwg = acDoc.Database;
+            double A1 = 72;
+            double A2 = 60;
+            double B1 = 20;
+            double B2 = 17;
+            double C1 = 29;
+            double C4 = 14.5;
+
+            using (Transaction Tx = dwg.TransactionManager.StartTransaction())
+            {
+
+                ObjectId ModelSpaceId = SymbolUtilityServices.GetBlockModelSpaceId(dwg);
+
+                BlockTableRecord btr = Tx.GetObject(ModelSpaceId, OpenMode.ForWrite) as BlockTableRecord;
+                
+                double X1 = 100;
+                double Y1 = 100;
+                double C1_1 = (A1 - C1) / 2;
+                ///Квадрат 1
+                plBox = new Autodesk.AutoCAD.DatabaseServices.Polyline(6);
+                plBox.Normal = Vector3d.ZAxis;
+                plBox.AddVertexAt(0, new Point2d(X1, Y1), 0.0, -1.0, -1.0);
+                plBox.AddVertexAt(1, new Point2d(X1 - C1_1, Y1), 0.0, -1.0, -1.0);
+                X1 -= C1_1;
+                plBox.AddVertexAt(2, new Point2d(X1, Y1 - A2), 0.0, -1.0, -1.0);
+                Y1 -= A2;
+                plBox.AddVertexAt(3, new Point2d(X1 + A1, Y1), 0.0, -1.0, -1.0);
+                X1 += A1;
+                Point3d point1 = new Point3d(X1, Y1, 0);
+                plBox.AddVertexAt(4, new Point2d(X1, Y1 + A2), 0.0, -1.0, -1.0);
+                Y1 += A2;
+                Point3d point2 = new Point3d(X1, Y1, 0);
+                Point3d point3 = new Point3d(X1, Y1 / 2, 0);
+                plBox.AddVertexAt(5, new Point2d(X1 - C1_1, Y1), 0.0, -1.0, -1.0);
+                X1 -= C1_1;
+
+                //Circle
+                X1 = 100 - C1_1 + (A1 / 2);
+                Y1 = 100 - A2 + B2;
+                circle = new Circle(new Point3d(X1, Y1, 0), Vector3d.ZAxis, B1 / 2);
+
+                //Arc
+                X1 = 100 - C1_1 + (A1 / 2);
+                Y1 = 100;
+                arc = new Arc(new Point3d(X1, Y1, 0), C4, Math.PI, 2 * Math.PI);
+
+
+                btr.AppendEntity(plBox);
+                btr.AppendEntity(circle);
+                btr.AppendEntity(arc);
+
+                Tx.AddNewlyCreatedDBObject(plBox, true);
+                Tx.AddNewlyCreatedDBObject(circle, true);
+                Tx.AddNewlyCreatedDBObject(arc, true);
+
+                Tx.Commit();
+            }
+        }
+        public static Autodesk.AutoCAD.Colors.Color GetColor(ComboBox comboBox)
+        {
+            if (comboBox.GetItemText(comboBox.SelectedItem) == "Red")
+            {
+                return Autodesk.AutoCAD.Colors.Color.FromRgb(200, 0, 0);
+            }
+
+            if (comboBox.GetItemText(comboBox.SelectedItem) == "Green")
+            {
+                return Autodesk.AutoCAD.Colors.Color.FromRgb(0, 200, 0);
+            }
+
+            if (comboBox.GetItemText(comboBox.SelectedItem) == "Blue")
+            {
+                return Autodesk.AutoCAD.Colors.Color.FromRgb(0, 0, 200);
+            }
+
+            else
+            {
+                return Autodesk.AutoCAD.Colors.Color.FromRgb(0, 0, 0);
+            }
+        }
     }
 }
